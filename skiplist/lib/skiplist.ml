@@ -3,6 +3,7 @@
 (* TODO: next array should be fixed to utilize cache, is that right? But that will have impose
    a hard limit on the height of the list (which impacts the keys).
 *)
+(* TODO: lockfree version branch (should be based on ocaml multicore ) *)
 
 type 'a t = {
   mutable height: int;
