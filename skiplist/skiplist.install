@@ -1,0 +1,8 @@
+lib: [
+  "_build/install/default/lib/skiplist/META"
+  "_build/install/default/lib/skiplist/dune-package"
+  "_build/install/default/lib/skiplist/opam"
+]
+bin: [
+  "_build/install/default/bin/skiplist"
+]
