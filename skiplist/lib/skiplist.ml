@@ -6,10 +6,6 @@
 *)
 (* TODO: lockfree version branch (should be based on ocaml multicore ) *)
 
-let unwrap_or opt default = match opt with
-  | None -> default
-  | Some x -> x
-
 module Vector = struct
   include Containers.Vector
 
@@ -63,41 +59,6 @@ let height t =
 let is_end {key; next} =
   Option.is_none key && Vector.empty next
 
-(* Find the first key that's greater than or equal to x. *)
-
-let find {head; height; _} ?(prev = None) ?(search_path = None) x =
-  let search = Some x in
-  let level = height - 1 in
-  let rec loop ({next; _} as node) level =
-    let { contents = node' } = Vector.get next level in
-    if (search > node'.key) && (not (is_end node')) then
-      loop node' level
-    else (
-      let _ = match prev with
-        | None -> ()
-        | Some prev -> prev.(level) := node in
-      let _ = match search_path with
-        | None -> ()
-        | Some search_path ->
-          Vector.push search_path node in
-      if level == 0 then
-        node'
-      else
-        loop node (level - 1)
-    )
-  in loop head level
-
-(* Assign a random height for the new insert key. *)
-let random_height max_height =
-  let rec loop height =
-    let my_max_int = (1 lsl 30) - 1 in
-    if height < max_height && Random.int(my_max_int) mod 4 == 0 then
-      loop (height + 1)
-    else
-      height
-  in
-  loop 1
-
 let print_prev prev =
   let _ = Printf.printf "prev: " in
   let _ = Array.iteri (fun i node_ref ->
@@ -118,10 +79,61 @@ let print_search_path search_path =
       search_path in
   print_newline ()
 
+(* Find the first key that's greater than or equal to x. *)
+let find {head; height; _} ?(prev = None) ?(search_path = None) x =
+  let search = Some x in
+  let level = height - 1 in
+  let rec loop ({next; _} as node) level =
+    let _ = match search_path with
+      | None -> ()
+      | Some search_path ->
+        Vector.push search_path node in
+    let _ = match prev with
+      | None -> ()
+      | Some prev ->
+        prev.(level) := node in
+    (* Printf.printf "level: %d\n" level; *)
+    let { contents = node' } = Vector.get next level in
+    let key' = node'.key in
+    (* Option.iter (fun key -> Printf.printf "next key: %d\n" key) key'; *)
+    if Option.equal (==) search key' then (
+      if level == 0 then node' else loop node (level - 1)
+    ) else (
+      if (search > key') && (not (is_end node')) then (
+        (* Option.iter (fun key -> Printf.printf "horizontal move key: %d\n" key) key'; *)
+        loop node' level
+      ) else (
+        if level == 0 then
+          node'
+        else
+          loop node (level - 1)
+      )
+    )
+  in
+  let result = loop head level in
+  let _ = match search_path with
+    | None -> ()
+    | Some search_path ->
+      print_search_path search_path in
+  let _ = match prev with
+    | None -> ()
+    | Some prev ->
+      print_prev prev in
+  result
+
+(* Assign a random height for the new insert key. *)
+let random_height max_height =
+  let rec loop height =
+    let my_max_int = (1 lsl 30) - 1 in
+    if height < max_height && Random.int(my_max_int) mod 4 == 0 then
+      loop (height + 1)
+    else
+      height
+  in
+  loop 1
+
 let insert t x =
   let x_height = random_height t.max_height in
-  let x_node = create_node x x_height in
-  let x_node_ref = ref x_node in
   (* How to avoid this allocation? *)
   let prev = Array.make t.max_height (ref (empty_node ())) in
   let _ = for i = 0 to t.max_height - 1 do
@@ -130,7 +142,6 @@ let insert t x =
   let search_path = Vector.create() in
   let _ = find t ~prev:(Some prev) ~search_path:(Some search_path) x in
   (* let _ = print_prev prev in *)
-  let _ = print_search_path search_path in
   if x_height > t.height then (
     (* Printf.printf "New height: %d, old height: %d\n" x_height t.height; *)
     let head_ref = (ref t.head) in
@@ -139,10 +150,28 @@ let insert t x =
     done;
     t.height <- x_height
   );
+  let x_node = create_node x x_height in
+  let x_node_ref = ref x_node in
   for i = 0 to x_height - 1 do
     let node_ref = prev.(i) in
     Vector.safe_set x_node.next i (Vector.safe_get !node_ref.next i (ref (empty_node ())));
     Vector.safe_set !node_ref.next i x_node_ref
+  done
+
+let delete t x =
+  let prev = Array.make t.max_height (ref (empty_node ())) in
+  let _ = for i = 0 to t.max_height - 1 do
+      prev.(i) <- (ref (empty_node ()))
+    done in
+  let search_path = Vector.create() in
+  let node = find t ~prev:(Some prev) ~search_path:(Some search_path) x in
+  let _ = print_prev prev in
+  for i = Vector.size node.next - 1 downto 0 do
+    let prev_ref = prev.(i) in
+    let next_ref = Vector.get node.next i in
+    Vector.safe_set !prev_ref.next i next_ref;
+    if Option.is_none !prev_ref.key && Option.is_none !next_ref.key then
+      t.height <- t.height - 1
   done
 
 let fold_left t f acc =
@@ -191,9 +220,15 @@ Printexc.record_backtrace true;;
 open Skiplist;;
 let t = create 12;;
 
-let l = List.init 10000 (fun x -> x);;
 let l = [1;0;9;7;8;6;4;2;3;5];;
 List.iter (fun x -> insert t x) l;;
 length t;;
 print t;;
+
+let search_path = Vector.create();;
+let prev = Array.make t.max_height (ref (empty_node ()));;
+  for i = 0 to t.max_height - 1 do
+      prev.(i) <- (ref (empty_node ()))
+    done;;
+   find t ~search_path:(Some search_path) ~prev:(Some prev) 3;;
 *)
