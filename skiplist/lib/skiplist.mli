@@ -19,6 +19,7 @@ module Make_skiplist :
     val delete : t -> Endpoint.t -> unit
     val fold_left : t -> ('a -> Endpoint.t -> 'a) -> 'a -> 'a
     val to_list : t -> Endpoint.t list
+    val from_list : ?max_height:int -> Endpoint.t list -> t
     val length : t -> int
     val contains: t -> Endpoint.t -> bool
     val print : t -> unit
@@ -33,6 +34,7 @@ sig
   val delete : t -> Int.t -> unit
   val fold_left : t -> ('a -> Int.t -> 'a) -> 'a -> 'a
   val to_list : t -> Int.t list
+  val from_list : ?max_height:int -> Int.t list -> t
   val length : t -> int
   val contains: t -> Int.t -> bool
   val print : t -> unit

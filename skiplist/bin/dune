@@ -1,4 +1,0 @@
-(executable
- (public_name skiplist)
- (name main)
- (libraries skiplist))

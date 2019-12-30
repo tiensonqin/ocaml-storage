@@ -2,7 +2,14 @@ lib: [
   "_build/install/default/lib/skiplist/META"
   "_build/install/default/lib/skiplist/dune-package"
   "_build/install/default/lib/skiplist/opam"
-]
-bin: [
-  "_build/install/default/bin/skiplist"
+  "_build/install/default/lib/skiplist/skiplist.a"
+  "_build/install/default/lib/skiplist/skiplist.cma"
+  "_build/install/default/lib/skiplist/skiplist.cmi"
+  "_build/install/default/lib/skiplist/skiplist.cmt"
+  "_build/install/default/lib/skiplist/skiplist.cmti"
+  "_build/install/default/lib/skiplist/skiplist.cmx"
+  "_build/install/default/lib/skiplist/skiplist.cmxa"
+  "_build/install/default/lib/skiplist/skiplist.cmxs"
+  "_build/install/default/lib/skiplist/skiplist.ml"
+  "_build/install/default/lib/skiplist/skiplist.mli"
 ]

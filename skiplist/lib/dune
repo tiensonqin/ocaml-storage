@@ -1,4 +1,4 @@
 (library
  (name skiplist)
- (preprocess (pps ppx_deriving_yojson))
- (libraries base containers yojson ppx_deriving_yojson.runtime ))
+ (public_name skiplist)
+ (libraries containers base))

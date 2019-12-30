@@ -1,2 +1,9 @@
 (test
- (name skiplist))
+  (name test)
+  (libraries
+  alcotest
+  skiplist
+  base
+  qcheck
+  qcheck-alcotest
+ ))

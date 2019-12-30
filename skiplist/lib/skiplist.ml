@@ -43,6 +43,7 @@ module type Skiplist_intf = sig
   val delete : t -> endpoint -> unit
   val fold_left : t -> ('a -> endpoint -> 'a) -> 'a -> 'a
   val to_list : t -> endpoint list
+  val from_list : ?max_height:int -> endpoint list -> t
   val length : t -> int
   val contains: t -> endpoint -> bool
 
@@ -92,7 +93,7 @@ module Make_skiplist(Endpoint: Comparable)
    *   let _ = Printf.printf "prev: " in
    *   let _ = Array.iteri (fun i node_ref ->
    *       match !node_ref.key with
-   *       | None -> ()
+   *       | None -> Printf.printf "L%d: head; " i
    *       | Some x ->
    *         let _ = Printf.printf "L%d: " i in
    *         let _ = Endpoint.show x in
@@ -123,6 +124,14 @@ module Make_skiplist(Endpoint: Comparable)
       let { contents = node' } = Vector.get next level in
       let compare_result = option_compare search node'.key in
       if compare_result == 0 then (
+        let _ = match prev with
+          | None -> ()
+          | Some prev ->
+            if level > 0 then (
+              for i = 0 to level - 1 do
+                prev.(i) := node
+              done
+            ) in
         node'
       ) else (
         if compare_result > 0 && (not (is_end node')) then (
@@ -183,6 +192,7 @@ module Make_skiplist(Endpoint: Comparable)
     let _ = for i = 0 to t.height - 1 do
         prev.(i) <- (ref (empty_node ()))
       done in
+    (* let _ = print_prev prev in *)
     let node = find t ~prev:(Some prev) x in
     if option_compare (Some x) node.key == 0 then (
       for i = Vector.size node.next - 1 downto 0 do
@@ -208,6 +218,11 @@ module Make_skiplist(Endpoint: Comparable)
   let to_list t =
     fold_left t (fun acc x -> x :: acc) []
     |> List.rev
+
+  let from_list ?(max_height = 12) l =
+    let t = create max_height in
+    List.iter (fun x -> insert t x) l;
+    t
 
   let length t =
     fold_left t (fun acc _x -> acc + 1 )  0
@@ -250,6 +265,7 @@ module Int_skiplist = Make_skiplist(struct
 Printexc.record_backtrace true;;
 open Skiplist;;
 open Int_skiplist;;
+
 let t = create 12;;
 
 let l = [1;0;9;7;8;6;4;2;3;5];;
@@ -262,4 +278,10 @@ let prev = Array.make 12 (ref (empty_node ()));;
       prev.(i) <- (ref (empty_node ()))
     done;;
    find t  ~prev:(Some prev) 3;;
+
+let l = [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 16; 17; 20; 23; 26; 39; 47; 59; 62; 65; 67;
+   72; 73; 74; 78; 81; 82; 86; 90; 93; 95; 96; 97];;
+let t = from_list l;;
+print t;;
+delete t 1;;
 *)
