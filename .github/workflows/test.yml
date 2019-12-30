@@ -13,7 +13,6 @@ jobs:
     - uses: avsm/setup-ocaml@master
       with:
         ocaml-version: ${{ matrix.ocaml-version }}
-    - run: cd ./skiplist
     - run: opam pin add skiplist.dev -n .
     - run: opam depext -yt skiplist
     - run: opam install -t . --deps-only

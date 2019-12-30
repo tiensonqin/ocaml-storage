@@ -6,7 +6,7 @@ B /home/tienson/.opam/4.08.0/lib/containers
 B /home/tienson/.opam/4.08.0/lib/containers/monomorphic
 B /home/tienson/.opam/4.08.0/lib/seq
 B /home/tienson/.opam/4.08.0/lib/sexplib0
-B ../_build/default/lib/.skiplist.objs/byte
+B ../../_build/default/skiplist/lib/.skiplist.objs/byte
 S /home/tienson/.opam/4.08.0/lib/base
 S /home/tienson/.opam/4.08.0/lib/base/caml
 S /home/tienson/.opam/4.08.0/lib/base/shadow_stdlib

@@ -23,8 +23,8 @@ B /home/tienson/.opam/4.08.0/lib/seq
 B /home/tienson/.opam/4.08.0/lib/sexplib0
 B /home/tienson/.opam/4.08.0/lib/stdlib-shims
 B /home/tienson/.opam/4.08.0/lib/uuidm
-B ../_build/default/lib/.skiplist.objs/byte
-B ../_build/default/test/.test.eobjs/byte
+B ../../_build/default/skiplist/lib/.skiplist.objs/byte
+B ../../_build/default/skiplist/test/.test.eobjs/byte
 S /home/tienson/.opam/4.08.0/lib/alcotest
 S /home/tienson/.opam/4.08.0/lib/astring
 S /home/tienson/.opam/4.08.0/lib/base
