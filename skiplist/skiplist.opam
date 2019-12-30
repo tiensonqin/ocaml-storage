@@ -1,0 +1,24 @@
+opam-version: "2.0"
+maintainer: "tiensonqin@gmail.com"
+authors: [ "Tienson Qin" ]
+synopsis: "Skiplist"
+description: """
+Skiplist implementation.
+"""
+license: "MIT"
+tags: []
+homepage: "https://github.com/tiensonqin/skiplist"
+bug-reports: "https://github.com/tiensonqin/skiplist"
+depends: [
+  "ocaml" {>= "4.02.3"}
+  "dune"
+  "containers"
+  "alcotest" {with-test}
+  "base" {with-test}
+]
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
+]
+dev-repo: "git+https://github.com/tiensonqin/skiplist"
