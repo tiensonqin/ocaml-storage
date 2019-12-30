@@ -1,5 +1,4 @@
 (* TODO: is it space wasting? how to verify it? *)
-(* TODO: add `length` field *)
 (* TODO: the next vector could be limited to a fixed length to utilize cache, is that right? But it imposes
    a hard limit on the height of the list (which impacts the keys).
 *)
@@ -55,6 +54,7 @@ module Make_skiplist(Endpoint: Comparable)
   : (Skiplist_intf with type endpoint := Endpoint.t)
 = struct
   type t = {
+    mutable length: int;
     mutable height: int;
     max_height: int;
     head: node
@@ -71,7 +71,10 @@ module Make_skiplist(Endpoint: Comparable)
     let end_node_ref = ref (empty_node ()) in
     let next = Vector.create () in
     let _ = Vector.push next end_node_ref in
-    {height = 1; max_height; head = {key = None; next}}
+    {length = 0;
+     height = 1;
+     max_height;
+     head = {key = None; next}}
 
   let create_node x =
     {
@@ -156,37 +159,41 @@ module Make_skiplist(Endpoint: Comparable)
     let _ = for i = 0 to t.max_height - 1 do
         prev.(i) <- (ref (empty_node ()))
       done in
-    let search_path = Vector.create() in
-    let _ = find t ~prev:(Some prev) ~search_path:(Some search_path) x in
-    if x_height > t.height then (
-      let head_ref = (ref t.head) in
-      for i = t.height to x_height - 1 do
-        Array.set prev i head_ref
+    let node = find t ~prev:(Some prev) x in
+    if option_compare (Some x) node.key != 0 then (
+      if x_height > t.height then (
+        let head_ref = (ref t.head) in
+        for i = t.height to x_height - 1 do
+          Array.set prev i head_ref
+        done;
+        t.height <- x_height
+      );
+      let x_node = create_node x in
+      let x_node_ref = ref x_node in
+      for i = 0 to x_height - 1 do
+        let node_ref = prev.(i) in
+        Vector.safe_set x_node.next i (Vector.safe_get !node_ref.next i (ref (empty_node ())));
+        Vector.safe_set !node_ref.next i x_node_ref
       done;
-      t.height <- x_height
-    );
-    let x_node = create_node x in
-    let x_node_ref = ref x_node in
-    for i = 0 to x_height - 1 do
-      let node_ref = prev.(i) in
-      Vector.safe_set x_node.next i (Vector.safe_get !node_ref.next i (ref (empty_node ())));
-      Vector.safe_set !node_ref.next i x_node_ref
-    done
+      t.length <- t.length + 1;
+    )
 
   let delete t x =
-    let prev = Array.make t.max_height (ref (empty_node ())) in
-    let _ = for i = 0 to t.max_height - 1 do
+    let prev = Array.make t.height (ref (empty_node ())) in
+    let _ = for i = 0 to t.height - 1 do
         prev.(i) <- (ref (empty_node ()))
       done in
-    let search_path = Vector.create() in
-    let node = find t ~prev:(Some prev) ~search_path:(Some search_path) x in
-    for i = Vector.size node.next - 1 downto 0 do
-      let prev_ref = prev.(i) in
-      let next_ref = Vector.get node.next i in
-      Vector.safe_set !prev_ref.next i next_ref;
-      if Option.is_none !prev_ref.key && Option.is_none !next_ref.key then
-        t.height <- t.height - 1
-    done
+    let node = find t ~prev:(Some prev) x in
+    if option_compare (Some x) node.key == 0 then (
+      for i = Vector.size node.next - 1 downto 0 do
+        let prev_ref = prev.(i) in
+        let next_ref = Vector.get node.next i in
+        Vector.safe_set !prev_ref.next i next_ref;
+        if Option.is_none !prev_ref.key && Option.is_none !next_ref.key then
+          t.height <- t.height - 1
+      done;
+      t.length <- t.length - 1;
+    )
 
   let fold_left t f acc =
     let rec loop {next; _} acc =
@@ -212,8 +219,8 @@ L2 head -> 4 -> 5 -> tail
 L1 head -> 4 -> 5 -> tail
 L0 head -> 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> tail
 *)
-  let print ({height; head; max_height} as t) =
-    let _ = Printf.printf "height: %d, max_height: %d, length: %d\n" height max_height (length t) in
+  let print {height; head; max_height; length} =
+    let _ = Printf.printf "height: %d, max_height: %d, length: %d\n" height max_height length in
     for i = height - 1 downto 0 do
       let _ = Printf.printf "L%d head -> " i in
       let rec loop {key; next} =
