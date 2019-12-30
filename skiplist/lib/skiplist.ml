@@ -46,6 +46,7 @@ module type Skiplist_intf = sig
   val fold_left : t -> ('a -> endpoint -> 'a) -> 'a -> 'a
   val to_list : t -> endpoint list
   val length : t -> int
+  val contains: t -> endpoint -> bool
 
   (* debug *)
   val print: t -> unit
@@ -133,6 +134,10 @@ module Make_skiplist(Endpoint: Comparable)
       )
     in
     loop head level
+
+  let contains t x =
+    let node = find t x in
+    option_compare (Some x) node.key == 0
 
   (* Assign a random height for the new insert key. *)
   let random_height max_height =

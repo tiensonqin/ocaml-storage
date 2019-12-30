@@ -8,19 +8,7 @@ end
 
 module type Comparable =
 sig type t val compare : t -> t -> int val show : t -> unit end
-module type Skiplist_intf =
-sig
-  type endpoint
-  type t
-  val create : int -> t
-  val height : t -> int
-  val insert : t -> endpoint -> unit
-  val delete : t -> endpoint -> unit
-  val fold_left : t -> ('a -> endpoint -> 'a) -> 'a -> 'a
-  val to_list : t -> endpoint list
-  val length : t -> int
-  val print : t -> unit
-end
+
 module Make_skiplist :
   functor (Endpoint : Comparable) ->
   sig
@@ -32,8 +20,10 @@ module Make_skiplist :
     val fold_left : t -> ('a -> Endpoint.t -> 'a) -> 'a -> 'a
     val to_list : t -> Endpoint.t list
     val length : t -> int
+    val contains: t -> Endpoint.t -> bool
     val print : t -> unit
   end
+
 module Int_skiplist :
 sig
   type t
@@ -44,5 +34,6 @@ sig
   val fold_left : t -> ('a -> Int.t -> 'a) -> 'a -> 'a
   val to_list : t -> Int.t list
   val length : t -> int
+  val contains: t -> Int.t -> bool
   val print : t -> unit
 end
