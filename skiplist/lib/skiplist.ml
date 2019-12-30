@@ -1,6 +1,5 @@
 (* TODO: is it space wasting? how to verify it? *)
 (* TODO: add `length` field *)
-(* TODO: draw *)
 (* TODO: the next vector could be limited to a fixed length to utilize cache, is that right? But it imposes
    a hard limit on the height of the list (which impacts the keys).
 *)
