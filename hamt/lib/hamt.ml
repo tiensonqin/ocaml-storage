@@ -45,18 +45,23 @@ let is_node = function
   | Node (_) -> true
   | _ -> false
 
+let is_empty = function
+  | Empty -> true
+  | _ -> false
+
 let insert children segments k v =
   let rec loop children = function
     | idx :: [] ->
       begin
         match Array.get children idx with
         | Empty ->
+          let _ = Printf.printf "Insert leaf idx: %d, k: %s\n" idx k in
           Array.set children idx (leaf k v)
         | _ ->
           raise Something_wrong
       end
     | idx :: tl ->
-      if not (is_node children.(idx)) then
+      if (is_empty children.(idx)) then
         Array.set children idx (node (Array.make array_len Empty));
       loop (extract_children children.(idx)) tl
     | [] ->
@@ -82,8 +87,8 @@ let assoc k v {length; internal} =
       let children = Array.make array_len Empty in
       let segments1 = segments (hash k) array_len in
       let segments2 = segments (hash k2) array_len in
-      let _ = insert children segments1 k v in
       let _ = insert children segments2 k2 v2 in
+      let _ = insert children segments1 k v in
       {
         length = 2;
         internal = Node children
@@ -93,16 +98,30 @@ let assoc k v {length; internal} =
      internal = Node children
     }
 
+let print_children children =
+  let s = match children with
+    | Empty -> "Empty "
+    | Leaf (_a, _b) -> "Leaf "
+    | Node _ -> "Node " in
+  Printf.printf "%s " s
+
 let find k {internal; _} =
   let segments = segments (hash k) array_len in
   let rec loop children l =
     match l with
-    | [] -> None
+    | [] ->
+      begin match children with
+        | Leaf (k', v) ->
+          if k = k' then Some v else None
+        | _ ->
+          None
+      end
     | (current :: next) ->
+      let _ = Printf.printf "current index: %d.\n" current in
+      let _ = print_children children in
+      let _ = print_newline () in
       match children with
-      | Empty -> None
-      | Leaf (k', v) ->
-        if k = k' then Some v else None
+      | Empty | Leaf _ -> None
       | Node children ->
         loop children.(current) next in
   loop internal segments
