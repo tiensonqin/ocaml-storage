@@ -1,4 +1,8 @@
-(* TODO: relax this using module *)
+(* TODO: functor modules *)
+(* TODO: bitmap optimization *)
+(* TODO: tail optimization *)
+(* TODO: transient optimization *)
+
 type key = string
 
 type 'a t = {
