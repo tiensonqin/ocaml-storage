@@ -12,7 +12,7 @@ type 'a t = {
 and 'a internal =
   | Empty
   | Leaf of key * 'a
-  | Node of 'a internal array
+  | Node of 'a internal array   (* make sure it's structural share *)
 
 let array_len = 32
 
@@ -59,7 +59,6 @@ let insert children segments k v =
       begin
         match Array.get children idx with
         | Empty ->
-          let _ = Printf.printf "Insert leaf idx: %d, k: %s\n" idx k in
           Array.set children idx (leaf k v)
         | _ ->
           raise Something_wrong
@@ -98,8 +97,9 @@ let assoc k v {length; internal} =
         internal = Node children
       }
   | Node children ->
-    {length;
-     internal = Node children
+    {
+      length;
+      internal = Node children
     }
 
 let print_children children =
@@ -130,8 +130,43 @@ let find k {internal; _} =
         loop children.(current) next in
   loop internal segments
 
-(* let update _k _v _t = ()
- * let dissoc _k _t = () *)
+(* create pointers to all children for the current array node except the
+   child which is in the finding path.
+*)
+let preserve_pointers children path_idx children' new_leaf =
+  let children = extract_children children in
+  let children' = extract_children children' in
+  let idx_children = ref Empty in
+  for i = 0 to Array.length children - 1 do
+    let child = if i = path_idx then
+        match children.(i) with
+        | Leaf _ ->
+          new_leaf
+        | _ ->
+          let _ = idx_children := node (Array.make array_len Empty) in
+          !idx_children
+      else
+        children.(i) in
+    children'.(i) <- child
+  done;
+  (children.(path_idx), !idx_children, new_leaf)
+
+let update k f t =
+  let segments = segments (hash k) array_len in
+  match find k t with
+  | None -> raise Not_found
+  | Some v ->
+    let new_leaf = leaf k (f v) in
+    let children = t.internal in
+    let children' = node (Array.make array_len Empty) in
+    let _ = List.fold_left (fun (children, children', new_leaf) idx ->
+        preserve_pointers children idx children' new_leaf) (children, children', new_leaf) segments in
+    {
+      length = t.length;
+      internal = children'
+    }
+
+let dissoc _k _t = ()
 
 let length {length; _} =
   length
@@ -142,4 +177,6 @@ let m = empty;;
 let m1 = assoc "a" 1 m;;
 let m2 = assoc "b" 2 m1;;
 find "b" m2;;
+let m3 = update "b" (fun x -> x + 1) m2;;
+find "b" m3;;
 *)
